@@ -1,0 +1,33 @@
+name: 🚀 自动收集 Clash & V2Ray 节点订阅
+
+on:
+  schedule:
+    - cron: '30 0 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  collect-nodes:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      - run: pip install pyyaml
+      - run: python collect.py
+      - name: Commit & Push
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add clashnode.yaml v2raynode.txt
+          if git diff --cached --quiet; then
+            echo "无更新"
+          else
+            git commit -m "Auto Update Nodes [$(date -u '+%Y-%m-%d %H:%M:%S UTC')]"
+            git push
+            echo "已推送 clashnode.yaml + v2raynode.txt"
+          fi
